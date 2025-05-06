@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SkillForge Learning Plan</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f5f7fa; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
+        <!-- Header -->
+        <div style="background-color: #4361ee; padding: 30px 20px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">Your Learning Plan</h1>
+        </div>
+        
+        <!-- Content -->
+        <div style="padding: 30px 20px;">
+            <h2 style="color: #333; margin-top: 0;">{{plan_title}}</h2>
+            <p style="color: #666; line-height: 1.5;">{{plan_description}}</p>
+            
+            <!-- Progress Section -->
+            <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <div style="font-size: 36px; font-weight: bold; color: #4361ee;">{{plan_progress}}</div>
+                    <p style="color: #666; margin: 5px 0 0 0;">Complete</p>
+                </div>
+                
+                <div style="background-color: #e9ecef; height: 10px; border-radius: 5px; margin: 15px 0;">
+                    <div style="background-color: #4361ee; height: 100%; border-radius: 5px; width: {{plan_progress}};"></div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; text-align: center; margin-top: 15px;">
+                    <div>
+                        <div style="font-weight: bold; font-size: 18px;">{{completed_steps}}</div>
+                        <div style="color: #666; font-size: 14px;">Steps Completed</div>
+                    </div>
+                    <div>
+                        <div style="font-weight: bold; font-size: 18px;">{{remaining_steps}}</div>
+                        <div style="color: #666; font-size: 14px;">Steps Remaining</div>
+                    </div>
+                    <div>
+                        <div style="font-weight: bold; font-size: 18px;">{{total_steps}}</div>
+                        <div style="color: #666; font-size: 14px;">Total Steps</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Steps Section -->
+            <h3 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px;">Learning Steps</h3>
+            <div style="white-space: pre-line; line-height: 1.6;">{{plan_steps}}</div>
+            
+            <!-- Notes Section (if available) -->
+            {{#if plan_notes}}
+            <h3 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 30px;">Notes</h3>
+            <div style="white-space: pre-line; line-height: 1.6; color: #666;">{{plan_notes}}</div>
+            {{/if}}
+        </div>
+        
+        <!-- Footer -->
+        <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #eee;">
+            <p style="color: #666; margin: 0; font-size: 14px;">This plan was sent from SkillForge. Happy learning!</p>
+        </div>
+    </div>
+</body>
+</html>
