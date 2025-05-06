@@ -1,4 +1,4 @@
-# CLOUD_PROJECT_AKHIL (SkillForge)
+# SkillForge
 
 SkillForge is an AI-powered learning plan generator that helps users create personalized learning paths for any skill they want to acquire. The application uses OpenAI's API to generate detailed, step-by-step learning plans and allows users to track their progress.
 
@@ -15,10 +15,6 @@ SkillForge is an AI-powered learning plan generator that helps users create pers
 ## Quick Start
 
 1. Clone the repository
-   ```bash
-   git clone https://github.com/VIJAYRUR/CLOUD_PROJECT_AKHIL.git
-   cd CLOUD_PROJECT_AKHIL
-   ```
 2. Install dependencies with `npm install`
 3. Set up environment variables (see [Getting Started](./docs/getting-started.md))
 4. Run the development server with `npm start`
@@ -52,39 +48,6 @@ Detailed documentation is available in the [docs](./docs) directory:
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-
-## Environment Variables
-
-The application uses environment variables for configuration. Create a `.env` file with the following variables (see `.env.example` for a template):
-
-```
-# AWS Configuration
-AWS_REGION=your_aws_region
-AWS_ACCESS_KEY_ID=your_aws_access_key_id
-AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
-
-# Cognito Configuration
-REACT_APP_AWS_REGION=your_aws_region
-REACT_APP_AWS_USER_POOL_ID=your_user_pool_id
-REACT_APP_AWS_APP_CLIENT_ID=your_app_client_id
-REACT_APP_AWS_APP_CLIENT_SECRET=your_app_client_secret
-
-# OpenAI Configuration
-REACT_APP_OPENAI_API_KEY=your_openai_api_key
-
-# Server Configuration
-PORT=5000
-CLIENT_URL=http://localhost:3000
-SESSION_SECRET=your_session_secret_key_here
-```
-
-## Deployment
-
-This project can be deployed to Vercel:
-
-1. Connect your GitHub repository to Vercel
-2. Configure the environment variables in Vercel's dashboard
-3. Deploy the application
 
 ## License
 
