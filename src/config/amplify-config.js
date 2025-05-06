@@ -4,18 +4,25 @@
 const amplifyConfig = {
   Auth: {
     // Required: Amazon Cognito Region
-    region: 'us-east-1',
+    region: process.env.REACT_APP_AWS_REGION || 'us-east-1',
 
     // Required: Amazon Cognito User Pool ID
-    userPoolId: 'us-east-1_91eIa7lk8',
+    userPoolId: process.env.REACT_APP_COGNITO_USER_POOL_ID,
 
     // Required: Amazon Cognito Web Client ID (App client without secret)
-    userPoolWebClientId: '7sj65oojf6198tk16723c595d9',
+    userPoolWebClientId: process.env.REACT_APP_COGNITO_CLIENT_ID,
 
     // Optional: Authentication Flow Type
     authenticationFlowType: 'USER_PASSWORD_AUTH'
   }
 };
+
+// For debugging
+console.log('Amplify Config:', {
+  region: amplifyConfig.Auth.region,
+  userPoolId: amplifyConfig.Auth.userPoolId,
+  clientId: amplifyConfig.Auth.userPoolWebClientId
+});
 
 // Export the configuration
 export default amplifyConfig;
