@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import ActivityLog from './ActivityLog';
 import './ModernProfile.css';
 
 const Profile = () => {
@@ -357,14 +356,6 @@ const Profile = () => {
                         <small className="text-muted">Today</small>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="stats-card">
-                    <h6 className="mb-3 fw-bold">
-                      <i className="bi bi-clock-history me-2" style={{ color: "var(--primary-color)" }}></i>
-                      Activity Log
-                    </h6>
-                    <ActivityLog />
                   </div>
                 </div>
                 )}
