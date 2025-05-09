@@ -140,7 +140,76 @@ const CognitoService = {
 
   // Rest of the service methods...
   // (truncated for brevity)
-  
+
+  /**
+   * Confirm user registration with verification code
+   * @param {string} username - Username (email)
+   * @param {string} code - Verification code
+   * @returns {Promise} - Promise that resolves when confirmation is complete
+   */
+  confirmRegistration: (username, code) => {
+    return new Promise((resolve, reject) => {
+      // Check if Cognito is configured
+      if (!isCognitoConfigured) {
+        console.error('Cognito is not configured. Please set up the App Client ID.');
+        reject(new Error('Cognito is not configured. Please set up the App Client ID.'));
+        return;
+      }
+
+      // Create Cognito user
+      const cognitoUser = new CognitoUser({
+        Username: username,
+        Pool: userPool
+      });
+
+      // Confirm registration
+      cognitoUser.confirmRegistration(code, true, (err, result) => {
+        if (err) {
+          console.error('Error confirming registration:', err);
+          reject(err);
+          return;
+        }
+
+        console.log('Registration confirmed successfully:', result);
+        resolve({ success: true });
+      });
+    });
+  },
+
+  /**
+   * Resend confirmation code
+   * @param {string} username - Username (email)
+   * @returns {Promise} - Promise that resolves when code is sent
+   */
+  resendConfirmationCode: (username) => {
+    return new Promise((resolve, reject) => {
+      // Check if Cognito is configured
+      if (!isCognitoConfigured) {
+        console.error('Cognito is not configured. Please set up the App Client ID.');
+        reject(new Error('Cognito is not configured. Please set up the App Client ID.'));
+        return;
+      }
+
+      // Create Cognito user
+      const cognitoUser = new CognitoUser({
+        Username: username,
+        Pool: userPool
+      });
+
+      // Resend confirmation code
+      cognitoUser.resendConfirmationCode((err, result) => {
+        if (err) {
+          console.error('Error resending confirmation code:', err);
+          reject(err);
+          return;
+        }
+
+        console.log('Confirmation code resent successfully:', result);
+        resolve({ success: true });
+      });
+    });
+  },
+
   /**
    * Get current authenticated user
    * @returns {Promise} - Promise that resolves with the current user data
