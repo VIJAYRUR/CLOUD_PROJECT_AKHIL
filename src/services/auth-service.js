@@ -166,6 +166,12 @@ const AuthService = {
     try {
       console.log('Confirming signup for:', username);
 
+      // Check if Cognito is configured
+      if (!isCognitoConfigured || !userPool) {
+        console.error('Cognito is not configured properly. Cannot confirm registration.');
+        throw new Error('Authentication service is not configured properly. Please contact support.');
+      }
+
       return new Promise((resolve, reject) => {
         try {
           // Create Cognito user
@@ -185,10 +191,18 @@ const AuthService = {
 
             console.log('Confirmation successful with Cognito SDK:', result);
 
+            // Check if DynamoDB services are available
+            if (!DynamoDBService.users || typeof DynamoDBService.users.getByEmail !== 'function') {
+              console.error('DynamoDBService.users.getByEmail is not a function');
+              // Still resolve with success
+              resolve({ success: true });
+              return;
+            }
+
             // Log user activity
             DynamoDBService.users.getByEmail(username)
               .then(user => {
-                if (user) {
+                if (user && DynamoDBService.userActivity && typeof DynamoDBService.userActivity.create === 'function') {
                   return DynamoDBService.userActivity.create({
                     userId: user.userId,
                     action: 'CONFIRM_REGISTRATION',
@@ -196,6 +210,7 @@ const AuthService = {
                     details: { method: code === 'AUTO_CONFIRM' ? 'AUTO' : 'EMAIL_CODE' }
                   });
                 }
+                return Promise.resolve();
               })
               .then(() => {
                 resolve({ success: true });
@@ -226,6 +241,12 @@ const AuthService = {
     try {
       console.log('Resending confirmation code to:', username);
 
+      // Check if Cognito is configured
+      if (!isCognitoConfigured || !userPool) {
+        console.error('Cognito is not configured properly. Cannot resend confirmation code.');
+        throw new Error('Authentication service is not configured properly. Please contact support.');
+      }
+
       return new Promise((resolve, reject) => {
         try {
           // Create Cognito user
@@ -245,10 +266,18 @@ const AuthService = {
 
             console.log('Confirmation code resent successfully with Cognito SDK:', result);
 
+            // Check if DynamoDB services are available
+            if (!DynamoDBService.users || typeof DynamoDBService.users.getByEmail !== 'function') {
+              console.error('DynamoDBService.users.getByEmail is not a function');
+              // Still resolve with success
+              resolve({ success: true });
+              return;
+            }
+
             // Log user activity
             DynamoDBService.users.getByEmail(username)
               .then(user => {
-                if (user) {
+                if (user && DynamoDBService.userActivity && typeof DynamoDBService.userActivity.create === 'function') {
                   return DynamoDBService.userActivity.create({
                     userId: user.userId,
                     action: 'RESEND_CONFIRMATION_CODE',
@@ -256,6 +285,7 @@ const AuthService = {
                     details: {}
                   });
                 }
+                return Promise.resolve();
               })
               .then(() => {
                 resolve({ success: true });
