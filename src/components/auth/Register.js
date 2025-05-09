@@ -6,7 +6,7 @@ import CognitoConfigNotification from '../common/CognitoConfigNotification';
 
 const Register = () => {
   const navigate = useNavigate();
-  const { register, loading, error } = useAuth();
+  const { register, loginAsGuest, loading, error } = useAuth();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -17,6 +17,7 @@ const Register = () => {
   const [formError, setFormError] = useState('');
   const [isVisible, setIsVisible] = useState(false);
   const [isCognitoConfigured, setIsCognitoConfigured] = useState(true);
+  const [showGuestWarning, setShowGuestWarning] = useState(false);
 
   // Animation effect when component mounts
   useEffect(() => {
@@ -73,6 +74,20 @@ const Register = () => {
     } catch (error) {
       // Error message is set in the AuthContext
       console.error('Registration error:', error);
+    }
+  };
+
+  const handleGuestLogin = () => {
+    setShowGuestWarning(true);
+  };
+
+  const confirmGuestLogin = async () => {
+    try {
+      await loginAsGuest();
+      navigate('/');
+    } catch (error) {
+      console.error('Guest login failed:', error);
+      setFormError('Failed to continue as guest. Please try again.');
     }
   };
 
@@ -263,10 +278,56 @@ const Register = () => {
                   <Link to="/login" className="login-link">Sign in</Link>
                 </p>
               </div>
+
+              <div className="mt-4 text-center">
+                <p className="text-muted mb-2">- OR -</p>
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={handleGuestLogin}
+                >
+                  <i className="bi bi-person-badge me-2"></i>
+                  Continue as Guest
+                </button>
+              </div>
             </form>
           </div>
         </div>
       </div>
+
+      {/* Guest Warning Modal */}
+      {showGuestWarning && (
+        <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex="-1">
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  <i className="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+                  Guest Mode Warning
+                </h5>
+                <button type="button" className="btn-close" onClick={() => setShowGuestWarning(false)}></button>
+              </div>
+              <div className="modal-body">
+                <p>You are about to continue as a guest user. Please note:</p>
+                <ul className="mb-0">
+                  <li>Your data will not be saved between sessions</li>
+                  <li>Your learning plans will be lost when you close the browser</li>
+                  <li>You won't be able to track your progress over time</li>
+                  <li>You can create an account later to save your data</li>
+                </ul>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowGuestWarning(false)}>
+                  Cancel
+                </button>
+                <button type="button" className="btn btn-primary" onClick={confirmGuestLogin}>
+                  Continue as Guest
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

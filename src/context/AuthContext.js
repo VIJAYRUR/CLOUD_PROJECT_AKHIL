@@ -386,6 +386,41 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Guest login
+  const loginAsGuest = () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Create a guest user with a random ID
+      const guestUser = {
+        userId: `guest_${Date.now()}`,
+        email: 'guest@example.com',
+        name: 'Guest User',
+        isGuest: true
+      };
+
+      // Set default preferences for guest
+      const defaultPreferences = {
+        learningStyle: 'visual',
+        pacePreference: 'moderate',
+        difficultyPreference: 'challenging',
+        interests: []
+      };
+
+      setCurrentUser(guestUser);
+      setUserPreferences(defaultPreferences);
+
+      return guestUser;
+    } catch (error) {
+      console.error('Guest login error:', error);
+      setError('Failed to continue as guest. Please try again.');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Context value
   const value = {
     currentUser,
@@ -398,6 +433,7 @@ export const AuthProvider = ({ children }) => {
     confirmRegistration,
     resendConfirmationCode,
     login,
+    loginAsGuest,
     logout,
     updateProfile,
     updatePreferences,
