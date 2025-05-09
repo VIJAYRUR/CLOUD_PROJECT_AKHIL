@@ -7,13 +7,26 @@ import {
 import DynamoDBService from './dynamodb-service';
 import amplifyConfig from '../config/amplify-config';
 
-// Create the Cognito User Pool
-const userPoolId = amplifyConfig.Auth.userPoolId;
-const clientId = amplifyConfig.Auth.userPoolWebClientId;
-const userPool = new CognitoUserPool({
-  UserPoolId: userPoolId,
-  ClientId: clientId
-});
+// Check if Cognito is properly configured
+const isCognitoConfigured =
+  amplifyConfig.Auth.userPoolId &&
+  amplifyConfig.Auth.userPoolWebClientId;
+
+// Create the Cognito User Pool if configured
+let userPool = null;
+try {
+  if (isCognitoConfigured) {
+    userPool = new CognitoUserPool({
+      UserPoolId: amplifyConfig.Auth.userPoolId,
+      ClientId: amplifyConfig.Auth.userPoolWebClientId
+    });
+    console.log('Cognito User Pool initialized successfully');
+  } else {
+    console.warn('Cognito is not properly configured. Authentication will not work.');
+  }
+} catch (error) {
+  console.error('Error initializing Cognito User Pool:', error);
+}
 
 // Auth Service - Wrapper around Cognito Service with DynamoDB integration
 // If Cognito is not configured, it will use a mock implementation
@@ -28,6 +41,12 @@ const AuthService = {
   signUp: async (username, password, attributes) => {
     try {
       console.log('Signing up user:', username, attributes);
+
+      // Check if Cognito is configured
+      if (!isCognitoConfigured || !userPool) {
+        console.error('Cognito is not configured properly. Cannot register user.');
+        throw new Error('Authentication service is not configured properly. Please contact support.');
+      }
 
       let userId;
       let userEmail = username;
@@ -64,31 +83,50 @@ const AuthService = {
             console.log('Sign up successful with Cognito SDK');
             userId = result.userSub;
 
+            // Make sure DynamoDBService.users exists before calling register
+            if (!DynamoDBService.users || typeof DynamoDBService.users.register !== 'function') {
+              console.error('DynamoDBService.users.register is not a function');
+              // Still resolve with the user data from Cognito
+              resolve({
+                userId: userId,
+                email: userEmail,
+                name: userName
+              });
+              return;
+            }
+
             // Store user in DynamoDB
-            DynamoDBService.users.create({
+            DynamoDBService.users.register({
               userId: userId,
               email: userEmail,
               name: userName,
+              password: password, // Include password for hashing
               createdAt: new Date().toISOString(),
               lastLogin: new Date().toISOString()
             })
             .then(() => {
-              // Create default user preferences
-              return DynamoDBService.userPreferences.create(userId, {
-                learningStyle: 'visual',
-                pacePreference: 'moderate',
-                difficultyPreference: 'challenging',
-                interests: []
-              });
+              // Create default user preferences if the function exists
+              if (DynamoDBService.userPreferences && typeof DynamoDBService.userPreferences.create === 'function') {
+                return DynamoDBService.userPreferences.create(userId, {
+                  learningStyle: 'visual',
+                  pacePreference: 'moderate',
+                  difficultyPreference: 'challenging',
+                  interests: []
+                });
+              }
+              return Promise.resolve();
             })
             .then(() => {
-              // Log user activity
-              return DynamoDBService.userActivity.create({
-                userId: userId,
-                action: 'REGISTER',
-                timestamp: new Date().toISOString(),
-                details: { method: 'EMAIL_PASSWORD' }
-              });
+              // Log user activity if the function exists
+              if (DynamoDBService.userActivity && typeof DynamoDBService.userActivity.create === 'function') {
+                return DynamoDBService.userActivity.create({
+                  userId: userId,
+                  action: 'REGISTER',
+                  timestamp: new Date().toISOString(),
+                  details: { method: 'EMAIL_PASSWORD' }
+                });
+              }
+              return Promise.resolve();
             })
             .then(() => {
               resolve({
@@ -187,7 +225,52 @@ const AuthService = {
   resendConfirmationCode: async (username) => {
     try {
       console.log('Resending confirmation code to:', username);
-      return true;
+
+      return new Promise((resolve, reject) => {
+        try {
+          // Create Cognito user
+          const cognitoUser = new CognitoUser({
+            Username: username,
+            Pool: userPool
+          });
+
+          // Resend confirmation code
+          console.log('Resending confirmation code with Cognito SDK');
+          cognitoUser.resendConfirmationCode((err, result) => {
+            if (err) {
+              console.error('Error resending confirmation code with Cognito SDK:', err);
+              reject(err);
+              return;
+            }
+
+            console.log('Confirmation code resent successfully with Cognito SDK:', result);
+
+            // Log user activity
+            DynamoDBService.users.getByEmail(username)
+              .then(user => {
+                if (user) {
+                  return DynamoDBService.userActivity.create({
+                    userId: user.userId,
+                    action: 'RESEND_CONFIRMATION_CODE',
+                    timestamp: new Date().toISOString(),
+                    details: {}
+                  });
+                }
+              })
+              .then(() => {
+                resolve({ success: true });
+              })
+              .catch(dbError => {
+                console.error('Error logging user activity:', dbError);
+                // Continue even if activity logging fails
+                resolve({ success: true });
+              });
+          });
+        } catch (authError) {
+          console.error('Error resending confirmation code with Cognito SDK:', authError);
+          reject(authError);
+        }
+      });
     } catch (error) {
       console.error('Error resending confirmation code:', error);
       throw error;
@@ -203,6 +286,12 @@ const AuthService = {
   signIn: async (username, password) => {
     try {
       console.log('Signing in user:', username);
+
+      // Check if Cognito is configured
+      if (!isCognitoConfigured || !userPool) {
+        console.error('Cognito is not configured properly. Cannot sign in user.');
+        throw new Error('Authentication service is not configured properly. Please contact support.');
+      }
 
       let userId;
       let userEmail = username;
@@ -237,39 +326,67 @@ const AuthService = {
 
               console.log('Login successful with Cognito SDK');
 
+              // Check if DynamoDB services are available
+              if (!DynamoDBService.users || typeof DynamoDBService.users.getByEmail !== 'function') {
+                console.error('DynamoDBService.users.getByEmail is not a function');
+                // Still resolve with the user data from Cognito
+                resolve({
+                  userId: userId,
+                  email: userEmail,
+                  name: userName,
+                  token: token
+                });
+                return;
+              }
+
               // Update user's last login time in DynamoDB
               DynamoDBService.users.getByEmail(username)
                 .then(user => {
                   if (!user) {
                     // Create user record if it doesn't exist
-                    const newUser = {
-                      userId: userId,
-                      email: userEmail,
-                      name: userName,
-                      createdAt: new Date().toISOString()
-                    };
-                    return DynamoDBService.users.create(newUser)
-                      .then(() => DynamoDBService.userPreferences.create(userId, {
-                        learningStyle: 'visual',
-                        pacePreference: 'moderate',
-                        difficultyPreference: 'challenging',
-                        interests: []
-                      }));
+                    if (DynamoDBService.users && typeof DynamoDBService.users.register === 'function') {
+                      const newUser = {
+                        userId: userId,
+                        email: userEmail,
+                        name: userName,
+                        password: 'COGNITO_MANAGED', // Placeholder since Cognito manages the password
+                        createdAt: new Date().toISOString()
+                      };
+                      return DynamoDBService.users.register(newUser)
+                        .then(() => {
+                          if (DynamoDBService.userPreferences && typeof DynamoDBService.userPreferences.create === 'function') {
+                            return DynamoDBService.userPreferences.create(userId, {
+                              learningStyle: 'visual',
+                              pacePreference: 'moderate',
+                              difficultyPreference: 'challenging',
+                              interests: []
+                            });
+                          }
+                          return Promise.resolve();
+                        });
+                    }
+                    return Promise.resolve();
                   } else {
                     // Update last login time
-                    return DynamoDBService.users.update(user.userId, {
-                      lastLogin: new Date().toISOString()
-                    });
+                    if (DynamoDBService.users && typeof DynamoDBService.users.update === 'function') {
+                      return DynamoDBService.users.update(user.userId, {
+                        lastLogin: new Date().toISOString()
+                      });
+                    }
+                    return Promise.resolve();
                   }
                 })
                 .then(() => {
                   // Log user activity
-                  return DynamoDBService.userActivity.create({
-                    userId: userId,
-                    action: 'LOGIN',
-                    timestamp: new Date().toISOString(),
-                    details: { method: 'EMAIL_PASSWORD' }
-                  });
+                  if (DynamoDBService.userActivity && typeof DynamoDBService.userActivity.create === 'function') {
+                    return DynamoDBService.userActivity.create({
+                      userId: userId,
+                      action: 'LOGIN',
+                      timestamp: new Date().toISOString(),
+                      details: { method: 'EMAIL_PASSWORD' }
+                    });
+                  }
+                  return Promise.resolve();
                 })
                 .then(() => {
                   resolve({
